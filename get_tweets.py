@@ -22,19 +22,60 @@ def get_tweets(username):
 	api = tweepy.API(auth)
 
 	#set count to however many tweets you want; twitter only allows 200 at once
-	number_of_tweets = 100
+	number_of_tweets = 10
 
 	#get tweets
 	tweets = api.user_timeline(screen_name = username,count = number_of_tweets)
 
+	tweets_for_csv = [[tweet.text.encode("utf-8")] for tweet in tweets]
+
+	#we always want the latest tweet
+	tweets_for_pi = tweets_for_csv.pop(0)
+
+	#we want to find if tweets are in a series
+	for num, tweet in enumerate(tweets_for_csv):
+		firstTweet = str(tweets_for_pi)
+		thisTweet = str(tweet)
+		#if the next tweet starts with this '..' we want the next one too
+		if firstTweet.startswith(".."):
+			tweets_for_pi.insert(0,thisTweet[2:-2])
+		#this is the next one in the series
+		if firstTweet.startswith("..") and thisTweet.startswith("['.."):
+			#debug
+			print "[DEBUG] Yes for %d" % num
+			tweets_for_pi.insert(0,thisTweet[2:-2])
+		#another format type, this is usually the last one
+		if thisTweet.endswith("..']"):
+			#debug
+			print "[DEBUG] Also yes for %d" % num
+			tweets_for_pi.insert(0,thisTweet[2:-2])
+			#but we need to see if we failed to catch one before now
+			while (num > 0):
+				num = num - 1
+				thisTweet = str(tweets_for_pi[num])
+				if thisTweet.endswith("..']"):
+					tweets_for_pi.insert(0,thisTweet[2:-2])
+					print "[DEBUG] Adding prev1 as well"
+				else:
+					tweets_for_pi.insert(0,thisTweet[2:-2])
+					print "[DEBUG] Adding prev2 as well"
+					break
+			print "[DEBUG] it broke right"
+		#if nothing else, the first one is standalone
+		else:	break
+
+	for tweet in tweets_for_pi:
+		print tweet
+
+	#the following is old and won't be used
 	#create array of tweet information: username, tweet id, date/time, text
-	tweets_for_csv = [[username,tweet.id_str, tweet.created_at, tweet.text.encode("utf-8")] for tweet in tweets]
+	#tweets_for_csv = [[username,tweet.id_str, tweet.created_at, tweet.text.encode("utf-8")] for tweet in tweets]
 
 	#write to a new csv file from the array of tweets
-	print "writing to {0}_tweets.csv".format(username)
-	with open("{0}_tweets.csv".format(username) , 'w+') as file:
-		writer = csv.writer(file, delimiter='|')
-		writer.writerows(tweets_for_csv)
+	#print "writing to {0}_tweets.csv".format(username)
+	#with open("{0}_tweets.csv".format(username) , 'w+') as file:
+	#	writer = csv.writer(file, delimiter='|')
+	#	writer.writerows(tweets_for_csv)
 
 
 #if we're running this as a script
