@@ -3,7 +3,13 @@
 
 import sys
 import csv
+import time
 import re
+from papirus import Papirus
+from papirus import PapirusText
+
+screen = Papirus()
+text = PapirusText()
 
 #http://www.tweepy.org/
 import tweepy
@@ -67,7 +73,9 @@ def get_tweets(username):
 		else:	break
 
 	for tweet in tweets_for_pi:
-		print tweet
+		text.write(tweet,13)
+		time.sleep(10)
+		screen.clear()
 
 	#the following is old and won't be used
 	#create array of tweet information: username, tweet id, date/time, text
